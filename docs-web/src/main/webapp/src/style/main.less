@@ -547,29 +547,19 @@ input[readonly].share-link {
 
 // Login
 .login-img-container {
-  background: url('../../api/theme/image/background') no-repeat center;
+  /* 渐变叠加到背景图片上 */
+  background: 
+    linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.2)), /* 黑色半透明渐变，可调整颜色 */
+    url('../img/秒速五厘米_2014924231852.JPG') no-repeat center;
   background-size: cover;
   height: 100%;
   box-shadow: 0 0 0 1px rgba(136,152,170,.1), 0 15px 35px 0 rgba(49,49,93,.1), 0 5px 15px 0 rgba(0,0,0,.13);
+  filter: brightness(0.95) blur(1px); /* 可选：亮度和模糊渲染 */
 }
 
-.login-box {
-  .btn-password-lost {
-    padding-bottom: 0;
-  }
-
-  form .row .col-md-6 {
-    padding: 0;
-  }
-
-  .btn-primary {
-    background-color: #2aabd2;
-    border-color: transparent;
-  }
-
-  .img-responsive {
-    margin-bottom: 30px;
-  }
+/* 登录页字体设置为宋体 */
+.login-box, .login-img-container, .vertical-center {
+  font-family: "宋体", SimSun, "Microsoft YaHei", Arial, sans-serif;
 }
 
 /* Styling for the ngProgress itself */

@@ -73,7 +73,8 @@ abstract class DbOpenHelper {
             Integer oldVersion = null;
             try {
                 stmt = connection.createStatement();
-                ResultSet result = stmt.executeQuery("select c.CFG_VALUE_C from T_CONFIG c where c.CFG_ID_C='DB_VERSION'");
+                ResultSet result = stmt
+                        .executeQuery("select c.CFG_VALUE_C from T_CONFIG c where c.CFG_ID_C='DB_VERSION'");
                 if (result.next()) {
                     String oldVersionStr = result.getString(1);
                     oldVersion = Integer.parseInt(oldVersionStr);
@@ -97,13 +98,22 @@ abstract class DbOpenHelper {
                 // Execute creation script
                 log.info("Executing initial schema creation script");
                 onCreate();
+                // 强制执行所有0号建表脚本，确保所有表都被创建
+                try {
+                    executeAllScript(0);
+                } catch (Exception e) {
+                    log.error("Error executing initial schema creation scripts", e);
+                    exceptions.add(e);
+                }
                 oldVersion = 0;
             }
 
             // Execute update script
             ResourceBundle configBundle = ConfigUtil.getConfigBundle();
             Integer currentVersion = Integer.parseInt(configBundle.getString("db.version"));
-            log.info(MessageFormat.format("Found database version {0}, new version is {1}, executing database incremental update scripts", oldVersion, currentVersion));
+            log.info(MessageFormat.format(
+                    "Found database version {0}, new version is {1}, executing database incremental update scripts",
+                    oldVersion, currentVersion));
             onUpgrade(oldVersion, currentVersion);
             log.info("Database upgrade complete");
         } catch (Exception e) {
@@ -177,7 +187,9 @@ abstract class DbOpenHelper {
         }
     }
 
-    public abstract void onCreate() throws Exception;
+    public void onCreate() throws Exception {
+        executeAllScript(0);
+    }
 
     public abstract void onUpgrade(int oldVersion, int newVersion) throws Exception;
 
