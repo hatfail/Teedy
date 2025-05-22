@@ -417,6 +417,36 @@ angular.module('docs',
           controller: 'GroupProfile'
         }
       }
+    })
+    .state('settings.registerRequest', {
+      url: '/registerRequest',
+      views: {
+        'settings': {
+          templateUrl: 'partial/docs/registerRequestList.html',
+          controller: 'RegisterRequestList'
+        }
+      },
+      resolve: {
+        adminOnly: function(User, $state, $q) {
+          return User.userInfo().then(function(data) {
+            if (data.groups && data.groups.indexOf('administrator') !== -1) {
+              return true;
+            } else {
+              $state.go('settings.default');
+              return $q.reject('Not authorized');
+            }
+          });
+        }
+      }
+    })
+    .state('registerRequestReview', {
+      url: '/registerRequestReview',
+      views: {
+        'page': {
+          templateUrl: 'partial/docs/registerRequest.review.html',
+          controller: 'RegisterRequestReviewCtrl'
+        }
+      }
     });
 
   // Configuring Restangular

@@ -12,8 +12,10 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceUnitUtil;
 import jakarta.persistence.TypedQuery;
 import jakarta.persistence.Query;
 import java.util.ArrayList;
@@ -44,10 +46,19 @@ public class DocumentDaoTest {
     @Mock
     private Query query;
 
+    @Mock
+    private EntityManagerFactory entityManagerFactory;
+
+    @Mock
+    private PersistenceUnitUtil persistenceUnitUtil;
+
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         documentDao = new DocumentDao();
+
+        when(entityManager.getEntityManagerFactory()).thenReturn(entityManagerFactory);
+        when(entityManagerFactory.getPersistenceUnitUtil()).thenReturn(persistenceUnitUtil);
 
         // 设置模拟环境
         when(entityManager.getTransaction()).thenReturn(transaction);
@@ -57,6 +68,10 @@ public class DocumentDaoTest {
         // 修复 ThreadLocalContext 用法
         ThreadLocalContext.cleanup();
         ThreadLocalContext.get().setEntityManager(entityManager);
+
+        // mock createNativeQuery 返回 query
+        when(entityManager.createNativeQuery(anyString())).thenReturn(query);
+        when(query.setParameter(anyString(), any())).thenReturn(query);
     }
 
     @After
@@ -112,7 +127,8 @@ public class DocumentDaoTest {
         expectedDocuments.add(createSampleDocument("doc-1"));
 
         // 模拟查询行为
-        when(entityManager.createQuery("select d from Document d where d.userId = :userId and d.deleteDate is null", Document.class))
+        when(entityManager.createQuery("select d from Document d where d.userId = :userId and d.deleteDate is null",
+                Document.class))
                 .thenReturn(typedQuery);
         when(typedQuery.setParameter("userId", userId)).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(expectedDocuments);
@@ -133,14 +149,20 @@ public class DocumentDaoTest {
         targetIdList.add("target-1");
 
         // 模拟AclDao行为
-        AclDao aclDao = mock(AclDao.class);
-        when(aclDao.checkPermission(eq(documentId), eq(PermType.READ), any())).thenReturn(true);
+        AclDao mockAclDao = mock(AclDao.class);
+        when(mockAclDao.checkPermission(eq(documentId), eq(PermType.READ), any())).thenReturn(true);
+
+        // 使用mock的AclDao创建DocumentDao
+        documentDao = new DocumentDao(mockAclDao);
 
         // 模拟查询行为
         Object[] resultRow = createSampleResultRow();
         when(entityManager.createNativeQuery(anyString())).thenReturn(query);
         when(query.setParameter("id", documentId)).thenReturn(query);
         when(query.getSingleResult()).thenReturn(resultRow);
+
+        // 确保线程环境正确
+        ThreadLocalContext.get().setEntityManager(entityManager);
 
         // 执行
         DocumentDto documentDto = documentDao.getDocument(documentId, PermType.READ, targetIdList);
@@ -159,8 +181,11 @@ public class DocumentDaoTest {
         targetIdList.add("target-1");
 
         // 模拟AclDao行为 - 无权限
-        AclDao aclDao = mock(AclDao.class);
-        when(aclDao.checkPermission(eq(documentId), eq(PermType.READ), any())).thenReturn(false);
+        AclDao mockAclDao = mock(AclDao.class);
+        when(mockAclDao.checkPermission(eq(documentId), eq(PermType.READ), any())).thenReturn(false);
+
+        // 使用mock的AclDao创建DocumentDao
+        documentDao = new DocumentDao(mockAclDao);
 
         // 执行
         DocumentDto documentDto = documentDao.getDocument(documentId, PermType.READ, targetIdList);
@@ -176,8 +201,11 @@ public class DocumentDaoTest {
         List<String> targetIdList = new ArrayList<>();
 
         // 模拟AclDao行为
-        AclDao aclDao = mock(AclDao.class);
-        when(aclDao.checkPermission(eq(documentId), eq(PermType.READ), any())).thenReturn(true);
+        AclDao mockAclDao = mock(AclDao.class);
+        when(mockAclDao.checkPermission(eq(documentId), eq(PermType.READ), any())).thenReturn(true);
+
+        // 使用mock的AclDao创建DocumentDao
+        documentDao = new DocumentDao(mockAclDao);
 
         // 模拟查询行为 - 抛出NoResultException
         when(entityManager.createNativeQuery(anyString())).thenReturn(query);
@@ -199,7 +227,8 @@ public class DocumentDaoTest {
         Document document = createSampleDocument(documentId);
 
         // 模拟查询行为
-        when(entityManager.createQuery("select d from Document d where d.id = :id and d.deleteDate is null", Document.class))
+        when(entityManager.createQuery("select d from Document d where d.id = :id and d.deleteDate is null",
+                Document.class))
                 .thenReturn(typedQuery);
         when(typedQuery.setParameter("id", documentId)).thenReturn(typedQuery);
         when(typedQuery.getSingleResult()).thenReturn(document);
@@ -224,7 +253,8 @@ public class DocumentDaoTest {
         Document expectedDocument = createSampleDocument(documentId);
 
         // 模拟查询行为
-        when(entityManager.createQuery("select d from Document d where d.id = :id and d.deleteDate is null", Document.class))
+        when(entityManager.createQuery("select d from Document d where d.id = :id and d.deleteDate is null",
+                Document.class))
                 .thenReturn(typedQuery);
         when(typedQuery.setParameter("id", documentId)).thenReturn(typedQuery);
         when(typedQuery.getSingleResult()).thenReturn(expectedDocument);
@@ -243,7 +273,8 @@ public class DocumentDaoTest {
         String documentId = "non-existent-id";
 
         // 模拟查询行为
-        when(entityManager.createQuery("select d from Document d where d.id = :id and d.deleteDate is null", Document.class))
+        when(entityManager.createQuery("select d from Document d where d.id = :id and d.deleteDate is null",
+                Document.class))
                 .thenReturn(typedQuery);
         when(typedQuery.setParameter("id", documentId)).thenReturn(typedQuery);
         when(typedQuery.getSingleResult()).thenThrow(new NoResultException());
@@ -268,7 +299,8 @@ public class DocumentDaoTest {
         updatedDocument.setDescription("Updated Description");
 
         // 模拟查询行为
-        when(entityManager.createQuery("select d from Document d where d.id = :id and d.deleteDate is null", Document.class))
+        when(entityManager.createQuery("select d from Document d where d.id = :id and d.deleteDate is null",
+                Document.class))
                 .thenReturn(typedQuery);
         when(typedQuery.setParameter("id", documentId)).thenReturn(typedQuery);
         when(typedQuery.getSingleResult()).thenReturn(existingDocument);

@@ -1,0 +1,32 @@
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">{{ 'register.request_list' | translate }}</h3>
+  </div>
+  <div class="panel-body">
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover">
+        <thead>
+          <tr>
+            <th><input type="checkbox" ng-click="requests.forEach(r => selected[r.id]=!selected[r.id])"></th>
+            <th>{{ 'register.username' | translate }}</th>
+            <th>{{ 'register.reason' | translate }}</th>
+            <th>{{ 'register.approve' | translate }}/{{ 'register.reject' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="req in requests">
+            <td><input type="checkbox" ng-model="selected[req.id]"></td>
+            <td>{{ req.username }}</td>
+            <td>{{ req.reason || '-' }}</td>
+            <td>
+              <button class="btn btn-success btn-xs" ng-click="approve(req)">{{ 'register.approve' | translate }}</button>
+              <button class="btn btn-danger btn-xs" ng-click="reject(req)">{{ 'register.reject' | translate }}</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <button class="btn btn-primary" ng-click="batchApprove()">{{ 'register.batch_approve' | translate }}</button>
+    <button class="btn btn-danger" ng-click="batchReject()">{{ 'register.batch_reject' | translate }}</button>
+  </div>
+</div>
