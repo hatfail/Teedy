@@ -26,7 +26,7 @@ angular.module('docs').controller('Navigation', function($scope, $state, $stateP
       User.userInfo(true).then(function(data) {
         $rootScope.userInfo = data;
       });
-      $state.go('main');
+      $state.go('login'); // 直接返回登录界面
     });
     $event.preventDefault();
   };

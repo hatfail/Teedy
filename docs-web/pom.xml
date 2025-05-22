@@ -26,11 +26,13 @@
     <dependency>
       <groupId>com.sismics.docs</groupId>
       <artifactId>docs-core</artifactId>
+      <version>1.12-SNAPSHOT</version>
     </dependency>
     
     <dependency>
       <groupId>com.sismics.docs</groupId>
       <artifactId>docs-web-common</artifactId>
+      <version>1.12-SNAPSHOT</version>
     </dependency>
     
     <!-- Dependencies to Jersey -->
@@ -189,11 +191,10 @@
     <application.mode>dev</application.mode>
     <docs.home>../data/docs</docs.home>
   </systemProperties>
-  <webApp>
+  <webAppConfig>
     <contextPath>/docs-web</contextPath>
-    <overrideDescriptor>${project.basedir}/src/dev/main/webapp/web
-      override.xml</overrideDescriptor>
-  </webApp>
+    <overrideDescriptor>${project.basedir}/src/dev/main/webapp/weboverride.xml</overrideDescriptor>
+  </webAppConfig>
   </configuration>
   </plugin>
   </plugins>
